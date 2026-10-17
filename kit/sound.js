@@ -1,11 +1,12 @@
-/* Metro Surfer — sound.
-   Every effect and the music loop are synthesised with the Web Audio API, so there are no audio files. */
+/* Claude Games kit: sound. Every effect and the music loop are synthesised with the Web Audio API, so there are
+   no audio files. Exposes window.Kit.sound. Call Kit.sound.init() from the first user gesture (a tap or key);
+   effects called before that are silent no-ops. Mute state is remembered in localStorage. */
 (function () {
   'use strict';
 
   let ctx = null, master, sfx, music, noiseBuf, timer = null;
   let muted = false;
-  try { muted = localStorage.getItem('metroSurfer.muted') === '1'; } catch (e) { /* storage blocked */ }
+  try { muted = localStorage.getItem('claudeGames.muted') === '1'; } catch (e) { /* storage blocked */ }
 
   const now = () => ctx.currentTime;
 
@@ -129,12 +130,15 @@
 
   const MUSIC_LEVEL = { play: 0.26, title: 0.18, over: 0.1, pause: 0.05 };
 
-  window.MetroSound = {
+  const Kit = (window.Kit = window.Kit || {});
+  Kit.sound = {
     init,
+    tone, // tone({ f, to, type, dur, vol, at, lp }) - one synth note, for game-specific effects
+    hiss, // hiss({ f, to, filter, q, dur, vol, at }) - filtered noise
     isMuted: () => muted,
     toggleMute() {
       muted = !muted;
-      try { localStorage.setItem('metroSurfer.muted', muted ? '1' : '0'); } catch (e) { /* storage blocked */ }
+      try { localStorage.setItem('claudeGames.muted', muted ? '1' : '0'); } catch (e) { /* storage blocked */ }
       if (ctx) master.gain.setTargetAtTime(muted ? 0 : 0.9, now(), 0.03);
       return muted;
     },
@@ -181,6 +185,13 @@
     },
     jet() { hiss({ filter: 'lowpass', f: 600, to: 2400, dur: 0.8, vol: 0.25, attack: 0.1 }); },
     click() { tone({ type: 'square', f: 880, dur: 0.05, vol: 0.05 }); },
+    // A cartoon "bonk" for a landed punch or kick.
+    punch() {
+      tone({ f: 260, to: 90, dur: 0.12, vol: 0.4 });
+      hiss({ filter: 'lowpass', f: 1800, to: 300, dur: 0.1, vol: 0.25 });
+    },
+    // A basketball swishing through the net.
+    swish() { hiss({ filter: 'highpass', f: 2500, to: 6000, dur: 0.35, vol: 0.18, attack: 0.05 }); },
     // A wobbling zombie groan, then a "BOO!" sting timed to the scare animation.
     groan() {
       if (!ctx) return;

@@ -5,9 +5,9 @@ There are no image, model, or audio files: every texture is painted on a canvas,
 
 ## Play
 
-- **Double-click `index.html`.** It works offline because Three.js is vendored in `vendor/`.
+- **Double-click `index.html`.** It works offline because Three.js and the shared kit are copied into `kit/`.
 - **Send one file:** `dist/metro-surfer.html` is the whole game inlined, about 700 KB. AirDrop or email it, then open it in a browser.
-- Rebuild that file after any edit: `python3 tools/bundle.py`
+- Rebuild that file after any edit: `python3 kit/tools/bundle.py .`
 - Scores, the chosen runner, Tommy's card and Word Hunt progress are saved per browser *and* per way of opening the game, so `index.html` and `dist/metro-surfer.html` each keep their own.
 
 | Keys | Touch | |
@@ -28,7 +28,8 @@ There are no image, model, or audio files: every texture is painted on a canvas,
 - **Your buddy is the other brother:** Tommy runs along with every runner, except when Tommy is the runner, when Teddy comes instead. Tap the buddy card on the title screen, the buddy button during a run, or press T, and he runs in doing his signature pose (Tommy's Y, Teddy's wave). He follows your runner for about 10 s, copying their jumps and rolls, and hands over a treat (🍦 💧 🧃 🍪 🍉 🍌) that your runner carries. Then he poses again and drops back. Tap again while he's there and he poses and hands over another treat; tap after he's gone and he comes right back.
   **Your buddy has your back:** while he's running with you (until he starts dropping back, about 9.6 s; his bar shows the time left), crashing into a train or barrier doesn't end the run. The obstacle bursts, "TOMMY SAVED YOU!" (or "TEDDY SAVED YOU!") pops up and he does his pose. Side bumps don't bring the inspector, and your hoverboard isn't used up. Calling him again keeps the protection going.
 - **Word Hunt:** letter tiles for the current word appear on the track, one at a time and in order. Spell the word for 100 coins plus its reward. TEDDY gives a hoverboard, TOMMY makes your buddy come running, METRO gives 2× score, SURF super sneakers, ZOMBIE a magnet and CLAUDE a jetpack. Progress carries over between runs.
-- **Make it yours:** `js/avatars.js` holds the runners (Teddy and Tommy included), who comes along as whose buddy, and the word list. Copy an entry to add a player (say, Dad) or a word; every field is a colour or a style name.
+- **Make it yours:** the runners (Teddy and Tommy included) and who comes along as whose buddy live in the shared kit, `~/claude-games/kit/roster.js`, so every Teddy & Tommy game gets the same characters. Copy an entry there to add a player (say, Dad), then run `python3 ../kit/tools/sync.py .` here. Metro's own word list and the inspector are in `js/content.js`.
+- **Signature moves:** when Teddy is the buddy he shadow-boxes like Mike Tyson (jab, straight) to say hi and when he saves you, and says bye with a basketball jump shot (🏀 … SWISH!). Tommy's move is his Y pose.
 
 ## What's in it
 
@@ -56,10 +57,10 @@ At the last check (kid-friendly speeds), 6 × 5-minute runs gave 0 crashes and 0
 
 ```
 index.html        page, HUD and screens (CSS inline)
-js/avatars.js     runners, Tommy and the Word Hunt words: edit this to add players or words
-js/art.js         canvas textures + models from primitives
-js/audio.js       Web Audio sound effects and music
-js/game.js        physics, level generator, autopilot, input, main loop
-vendor/three.min.js   Three.js r149 (MIT, see three.LICENSE)
-tools/bundle.py   builds dist/metro-surfer.html
+js/content.js     the inspector and the Word Hunt words
+js/art.js         the world: track, buildings, trains, barriers, pickups, the dog
+js/game.js        physics, level generator, autopilot, buddy, input, main loop
+kit/              a copy of the shared Claude Games kit: Three.js r149, characters (people.js, roster.js),
+                  portraits, synth sound, and tools/bundle.py. Edit ~/claude-games/kit, then re-sync here.
+dist/metro-surfer.html   the single-page build
 ```

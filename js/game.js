@@ -3,7 +3,7 @@
    One physics step (stepPlayer) drives both the real player and the autopilot's look-ahead simulations. */
 (function () {
   'use strict';
-  const T = THREE, A = window.MetroArt, S = window.MetroSound;
+  const T = THREE, A = window.MetroArt, S = Kit.sound, People = Kit.people;
   const { LANE_W, TRAIN_TOP, RAMP_LEN, CAR_LEN, LOW_H, HIGH_BOTTOM, HIGH_TOP, SEG_LEN } = A.dims;
 
   // ---------------------------------------------------------------- tuning
@@ -754,7 +754,7 @@
   // ---------------------------------------------------------------- avatars
   // Every runner is a "player" with its own best score. Picking one swaps the model live, even mid-attract-mode.
 
-  const AVATARS = window.MetroAvatars;
+  const AVATARS = Kit.roster.list;
   let avatar = AVATARS[0];
   const bestOf = (id) => store.get('best.' + id, 0);
 
@@ -762,12 +762,12 @@
     avatar = AVATARS.find((a) => a.id === id) || AVATARS[0];
     store.set('avatar', avatar.id);
     const old = playerM;
-    playerM = A.buildPerson(avatar.look);
+    playerM = People.build(avatar.look);
     playerM.root.add(boardM); // re-parents the hoverboard and jetpack onto the new model
     playerM.hips.add(jetM);
     if (treat.holdT > 0) playerM.armR.add(treat.sprite);
     scene.add(playerM.root);
-    setBuddy(window.MetroBuddyFor(avatar.id));
+    setBuddy(Kit.roster.buddyFor(avatar.id));
     if (old) {
       scene.remove(old.root);
       old.root.traverse((o) => {
@@ -795,58 +795,12 @@
     document.querySelectorAll('.avatar').forEach((b) => { b.querySelector('.bs').textContent = bestOf(b.dataset.id).toLocaleString(); });
   }
 
-  // Portrait thumbnails: render each runner from the front with a throwaway renderer, keep the PNGs.
-  // A runner with `scare` also gets four full-body walk frames for the scare flipbook.
+  // Portrait thumbnails for the cards, and the scare character's walk-cycle flipbook, rendered once by the kit.
   let scareFrames = [], scareTimer = 0, scareEnd = 0, thumbs = {};
   function avatarThumbs() {
-    const size = 152;
-    const r = new T.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-    r.setPixelRatio(1);
-    r.setSize(size, size, false);
-    r.outputEncoding = T.sRGBEncoding;
-    const sc = new T.Scene();
-    sc.add(new T.HemisphereLight('#ffffff', '#8a6e58', 0.9));
-    const key = new T.DirectionalLight('#fff4e0', 1.1);
-    key.position.set(-1.5, 3, -3);
-    sc.add(key);
-    const cam = new T.PerspectiveCamera(30, 1, 0.1, 20);
-    cam.position.set(0.8, 1.95, -2.6);
-    cam.lookAt(0, 1.68, 0);
-    const out = {};
-    for (const av of AVATARS) {
-      const p = A.buildPerson(av.look);
-      A.posePerson(p, 0, av.pose || 'idle', 1);
-      p.hips.rotation.x = 0;
-      sc.add(p.root);
-      if (av.pose) { // arms up: pull back so the hands fit
-        cam.position.set(0.6, 1.95, -3.6);
-        cam.lookAt(0, 1.8, 0);
-      }
-      r.render(sc, cam);
-      cam.position.set(0.8, 1.95, -2.6);
-      cam.lookAt(0, 1.68, 0);
-      out[av.id] = r.domElement.toDataURL('image/png');
-      if (av.scare) {
-        r.setSize(300, 400, false);
-        const full = new T.PerspectiveCamera(35, 300 / 400, 0.1, 20);
-        full.position.set(0, 1.25, -4.4);
-        full.lookAt(0, 1.05, 0);
-        const ghoul = new T.HemisphereLight('#c8ffb0', '#20301a', 0.6);
-        sc.add(ghoul);
-        for (let i = 0; i < 4; i++) {
-          A.posePerson(p, (i * Math.PI) / 2, 'walk', 1);
-          p.root.rotation.y = Math.sin((i * Math.PI) / 2) * 0.15;
-          r.render(sc, full);
-          scareFrames.push(r.domElement.toDataURL('image/png'));
-        }
-        sc.remove(ghoul);
-        r.setSize(size, size, false);
-      }
-      sc.remove(p.root);
-    }
-    r.dispose();
-    r.forceContextLoss();
-    return out;
+    const scary = AVATARS.find((a) => a.scare);
+    if (scary) scareFrames = Kit.portraits.frames(scary.look, { mode: 'walk', tint: '#c8ffb0' });
+    return Kit.portraits(AVATARS);
   }
 
   function playScare() {
@@ -915,6 +869,7 @@
     if (buddy.t > 4.8) {
       buddy.t = 1.0;
       buddy.given = false;
+      buddy.shot = false;
     }
   }
 
@@ -1025,9 +980,9 @@
       });
     }
     BUDDY = AVATARS.find((a) => a.id === id);
-    buddy.m = A.buildPerson(BUDDY.look);
+    buddy.m = People.build(BUDDY.look);
     buddy.m.root.scale.setScalar(BUDDY.buddyScale || 0.8);
-    buddy.tag = A.nameTag(BUDDY.name, BUDDY.tag || '#ffb02e');
+    buddy.tag = Kit.gfx.nameTag(BUDDY.name, BUDDY.tag || '#ffb02e');
     buddy.tag.position.y = 2.75;
     buddy.m.root.add(buddy.tag);
     buddy.m.root.visible = false;
@@ -1048,7 +1003,7 @@
 
   function summonBuddy() {
     if (buddy.on) return;
-    Object.assign(buddy, { on: true, t: 0, dz: 16, x: P.x, given: false });
+    Object.assign(buddy, { on: true, t: 0, dz: 16, x: P.x, given: false, shot: false, mode: '', poseT: 0 });
     buddy.m.root.visible = true;
     toast(`${BUDDY.name}'S HERE!`);
   }
@@ -1060,7 +1015,7 @@
 
   function giveTreat() {
     const [emoji, label] = pick(TREATS);
-    treat.sprite.material.map = A.emojiTexture(emoji);
+    treat.sprite.material.map = Kit.gfx.emojiTexture(emoji);
     treat.sprite.material.needsUpdate = true;
     buddy.m.armR.localToWorld(treat.from.set(0, -0.7, 0));
     scene.add(treat.sprite);
@@ -1070,6 +1025,40 @@
     treat.flyT = 0;
     toast(`${emoji} ${label} FROM ${BUDDY.name}!`);
     sfx('powerup');
+  }
+
+  // Teddy's jump shot: a 🏀 arcs from his hands to a spot high up ahead, then swishes.
+  const ball = { sprite: null, t: -1, from: new T.Vector3(), to: new T.Vector3() };
+  function shootBall() {
+    buddy.shot = true;
+    if (!ball.sprite) {
+      ball.sprite = new T.Sprite(new T.SpriteMaterial({ map: Kit.gfx.emojiTexture('🏀'), depthWrite: false }));
+      ball.sprite.scale.setScalar(0.55);
+      scene.add(ball.sprite);
+    }
+    buddy.m.root.updateMatrixWorld(true);
+    People.handWorld(buddy.m, 1, ball.from);
+    ball.from.z += P.pd; // track it relative to the runner, who keeps moving
+    ball.to.set(P.x * 0.5, 5.5, -9);
+    ball.t = 0;
+    ball.sprite.visible = true;
+  }
+  function updateBall(dt) {
+    if (ball.t < 0) return;
+    ball.t += dt / 0.9;
+    const k = Math.min(1, ball.t);
+    ball.sprite.position.lerpVectors(ball.from, ball.to, k);
+    ball.sprite.position.y += Math.sin(k * Math.PI) * 2.2;
+    ball.sprite.position.z -= P.pd;
+    ball.sprite.material.rotation = -ball.t * 8;
+    if (k >= 1) {
+      ball.t = -1;
+      ball.sprite.visible = false;
+      const p = ball.sprite.position;
+      particles.emit(p.x, p.y, p.z, 24, { color: '#ff9f1c', spread: 0.4, speed: 3, up: 3, life: 0.6, vz: -G.speed * 0.8 });
+      sfx('swish');
+      toast('SWISH!');
+    }
   }
 
   const handPos = new T.Vector3();
@@ -1104,6 +1093,7 @@
 
   function updateBuddy(dt) {
     updateTreat(dt);
+    updateBall(dt);
     if (!buddy.on) return;
     buddy.t += dt;
     const t = buddy.t;
@@ -1124,10 +1114,19 @@
     buddy.ph += dt * (G.state === 'playing' || G.state === 'title' ? G.speed * 0.5 : 4);
     const giving = t > 3.9 && t < 4.6;
     buddy.cheerT = Math.max(0, buddy.cheerT - dt);
-    const posing = (t > 1.2 && t < 2.6) || t > 8.2 || buddy.cheerT > 0; // Y pose: hi, bye, and after saving you
-    const mode = roll ? 'roll' : air ? 'jump' : giving ? 'give' : posing ? BUDDY.pose || 'wave' : 'run';
-    A.posePerson(buddy.m, buddy.ph, mode, damp(20, dt));
-    buddy.m.root.position.set(buddy.x, buddy.y, -bd);
+    // signature moves: Tommy's Y, Teddy's boxing combo to say hi (and after saving you), his jump shot to say bye
+    const hello = (t > 1.2 && t < 2.6) || buddy.cheerT > 0, bye = t > 8.2;
+    const mode = roll ? 'roll' : air ? 'jump' : giving ? 'give' : hello ? Kit.roster.signature(BUDDY, 'hello') : bye ? Kit.roster.signature(BUDDY, 'goodbye') : 'run';
+    buddy.poseT = mode === buddy.mode ? buddy.poseT + dt : 0;
+    buddy.mode = mode;
+    People.pose(buddy.m, mode === 'boxing' ? buddy.t * 6 : buddy.ph, mode, damp(20, dt));
+    let hop = 0;
+    if (mode === 'jumpshot') {
+      const u = buddy.poseT / 0.7;
+      if (u < 1) hop = Math.sin(u * Math.PI) * 1.1;
+      if (u > 0.45 && !buddy.shot) shootBall();
+    }
+    buddy.m.root.position.set(buddy.x, buddy.y + hop, -bd);
     if (!buddy.given && t > 4.3) {
       buddy.given = true;
       giveTreat();
@@ -1185,7 +1184,7 @@
     for (let i = 0; i < n; i++) pos[i * 3 + 1] = -999;
     geo.setAttribute('position', new T.BufferAttribute(pos, 3).setUsage(T.DynamicDrawUsage));
     geo.setAttribute('color', new T.BufferAttribute(col, 4).setUsage(T.DynamicDrawUsage));
-    const mat = new T.PointsMaterial({ size: 0.32, map: A.dotTexture, vertexColors: true, transparent: true, depthWrite: false });
+    const mat = new T.PointsMaterial({ size: 0.32, map: Kit.gfx.dotTexture(), vertexColors: true, transparent: true, depthWrite: false });
     const points = new T.Points(geo, mat);
     points.frustumCulled = false;
     const color = new T.Color();
@@ -1251,7 +1250,7 @@
     else if (P.jetT > 0) mode = 'jet';
     else if (P.rollT > 0) mode = 'roll';
     else if (!P.grounded) mode = 'jump';
-    A.posePerson(playerM, runPhase, mode, damp(20, dt));
+    People.pose(playerM, runPhase, mode, damp(20, dt));
     playerM.rig.rotation.x = mode === 'roll' ? -Math.PI * 2 * (1 - P.rollT / ROLL_DUR) : 0;
     const hover = P.boardT > 0 ? 0.3 + Math.sin(t * 7) * 0.05 : 0;
     playerM.root.position.set(P.x, P.y + hover, -P.pd);
@@ -1275,7 +1274,7 @@
     chase.ph += dt * (grabbing ? 3 : G.speed * 0.42);
     inspectorM.root.visible = dogM.root.visible = chase.dist < 15;
     inspectorM.root.position.set(chase.x, chase.y, -chaseD);
-    A.posePerson(inspectorM, chase.ph, grabbing ? 'grab' : 'run', damp(15, dt));
+    People.pose(inspectorM, chase.ph, grabbing ? 'grab' : 'run', damp(15, dt));
     dogM.root.position.set(chase.x + (chase.x > 0 ? -0.95 : 0.95), chase.y, -chaseD - 0.6);
     A.poseDog(dogM, grabbing ? chase.ph * 0.5 : chase.ph * 1.2);
 
@@ -1487,7 +1486,7 @@
     boardM = A.buildBoard();
     boardM.position.y = -0.1;
     jetM = A.buildJetpack();
-    inspectorM = A.buildPerson(window.MetroInspector);
+    inspectorM = People.build(window.MetroInspector);
     dogM = A.buildDog();
     scene.add(inspectorM.root, dogM.root);
     particles = makeParticles(700);
