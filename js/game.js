@@ -465,7 +465,7 @@
 
   function stumble() {
     G.shake = Math.max(G.shake, 0.35);
-    if (tommyGuarding()) return sfx('bump'); // with Tommy along a bump is just a bump
+    if (buddyGuarding()) return sfx('bump'); // with your buddy along a bump is just a bump
     if (G.soak) G.soak.stumbles++;
     if (G.stumbleT > 0) return crash(null); // second bump while the inspector is on your heels
     sfx('stumble');
@@ -475,7 +475,7 @@
   }
 
   function onHit(o) {
-    if (tommyGuarding()) {
+    if (buddyGuarding()) {
       P.invT = 1.0;
       smash(o);
       sfx('boardBreak');
@@ -767,6 +767,7 @@
     playerM.hips.add(jetM);
     if (treat.holdT > 0) playerM.armR.add(treat.sprite);
     scene.add(playerM.root);
+    setBuddy(window.MetroBuddyFor(avatar.id));
     if (old) {
       scene.remove(old.root);
       old.root.traverse((o) => {
@@ -796,7 +797,7 @@
 
   // Portrait thumbnails: render each runner from the front with a throwaway renderer, keep the PNGs.
   // A runner with `scare` also gets four full-body walk frames for the scare flipbook.
-  let scareFrames = [], scareTimer = 0, scareEnd = 0;
+  let scareFrames = [], scareTimer = 0, scareEnd = 0, thumbs = {};
   function avatarThumbs() {
     const size = 152;
     const r = new T.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -812,7 +813,7 @@
     cam.position.set(0.8, 1.95, -2.6);
     cam.lookAt(0, 1.68, 0);
     const out = {};
-    for (const av of AVATARS.concat([BUDDY])) {
+    for (const av of AVATARS) {
       const p = A.buildPerson(av.look);
       A.posePerson(p, 0, av.pose || 'idle', 1);
       p.hips.rotation.x = 0;
@@ -878,7 +879,7 @@
   }
 
   function buildPicker() {
-    const thumbs = avatarThumbs();
+    thumbs = avatarThumbs();
     const row = $('picker');
     for (const av of AVATARS) {
       const b = document.createElement('button');
@@ -896,7 +897,7 @@
     const b = document.createElement('button');
     b.className = 'avatar buddy';
     b.id = 'buddyCard';
-    b.innerHTML = `<img alt="" src="${thumbs[BUDDY.id]}"><span class="nm">${BUDDY.name}</span><span class="bs">TAP ME!</span>`;
+    b.innerHTML = `<img alt=""><span class="nm"></span><span class="bs">TAP ME!</span>`;
     b.addEventListener('click', (e) => {
       e.stopPropagation();
       S.init();
@@ -905,11 +906,9 @@
       b.blur();
     });
     row.appendChild(b);
-    $('buddyFace').src = thumbs[BUDDY.id];
-    $('pwBuddyFace').src = thumbs[BUDDY.id];
   }
 
-  // Every tap brings Tommy. Tapping again once he's handed over his treat makes him pose and give another one.
+  // Every tap brings the buddy. Tapping again once he's handed over his treat makes him pose and give another one.
   function callBuddy() {
     if (G.state !== 'playing' && G.state !== 'title') return;
     if (!buddy.on) return summonBuddy();
@@ -926,7 +925,7 @@
   const WORDS = window.MetroWords;
   const hunt = { i: store.get('word.i', 0) % WORDS.length, got: store.get('word.got', 0), done: store.get('word.done', 0), sinceRows: 0 };
   const REWARD = {
-    board: '+1 HOVERBOARD', tommy: 'TOMMY JOINS YOU!', mult: '2× SCORE!', sneakers: 'SUPER SNEAKERS!',
+    board: '+1 HOVERBOARD', tommy: 'YOUR BUDDY JOINS YOU!', mult: '2× SCORE!', sneakers: 'SUPER SNEAKERS!',
     magnet: 'COIN MAGNET!', jet: 'JETPACK!', coins: '+100 MORE COINS',
   };
   const word = () => WORDS[hunt.i].word;
@@ -970,7 +969,7 @@
       if (w.reward === 'jet') skyCoins();
     }
     toast(`${w.word}! 🎉`);
-    toast(`+100 COINS · ${REWARD[w.reward] || ''}`);
+    toast(`+100 COINS · ${w.reward === 'tommy' ? `${BUDDY.name} JOINS YOU!` : REWARD[w.reward] || ''}`);
     sfx('powerup');
     for (const color of ['#ffd400', '#ff3d7f', '#18d4ff', '#7cff4f']) {
       particles.emit(P.x, P.y + 1.5, -P.pd - 1, 30, { color, spread: 1.2, speed: 6, up: 10, life: 1.1, vz: -G.speed * 0.9 });
@@ -995,31 +994,57 @@
     $('huntDone').textContent = hunt.done ? `· ${hunt.done} spelled` : '';
   }
 
-  // ---------------------------------------------------------------- Tommy, the buddy
+  // ---------------------------------------------------------------- the buddy (Tommy, or Teddy when Tommy runs)
   // Tap his card, his button or T and he runs along behind the runner for ~10 s, copying the runner's jumps and rolls
-  // a beat later. He strikes his Y pose to say hi, sprints up to hand over a treat, poses again and drops back.
-  // Purely visual: no effect on the run.
+  // a beat later. He strikes his signature pose to say hi, sprints up to hand over a treat, poses again and drops
+  // back. While he keeps pace he also shields the runner from crashes (see onHit).
 
-  const BUDDY = window.MetroBuddy;
+  let BUDDY = null; // the current buddy: an entry from the runner list
   const TREATS = [['🍦', 'ICE CREAM'], ['💧', 'WATER'], ['🧃', 'JUICE BOX'], ['🍪', 'COOKIE'], ['🍉', 'WATERMELON'], ['🍌', 'BANANA']];
   const buddy = { m: null, tag: null, on: false, t: 0, x: 0, y: 0, dz: 16, ph: 0, given: false, cheerT: 0 };
   const treat = { sprite: null, flyT: -1, holdT: 0, from: new T.Vector3() };
-  const trail = []; // the runner's recent heights, so Tommy can copy them when he reaches the same spot
+  const trail = []; // the runner's recent heights, so the buddy can copy them when he reaches the same spot
 
   function buildBuddy() {
+    treat.sprite = new T.Sprite(new T.SpriteMaterial({ depthWrite: false }));
+    treat.sprite.visible = false;
+    scene.add(treat.sprite);
+  }
+
+  // Swap in a different buddy (the runner changed): rebuild the model and relabel his card and button.
+  function setBuddy(id) {
+    if (BUDDY && BUDDY.id === id) return;
+    if (buddy.m) {
+      if (buddy.on) dismissBuddy();
+      scene.remove(buddy.m.root);
+      buddy.m.root.traverse((o) => {
+        if (o.isMesh) {
+          o.geometry.dispose();
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => mt.dispose());
+        }
+      });
+    }
+    BUDDY = AVATARS.find((a) => a.id === id);
     buddy.m = A.buildPerson(BUDDY.look);
-    buddy.m.root.scale.setScalar(BUDDY.scale);
-    buddy.tag = A.nameTag(BUDDY.name, '#ffb02e');
+    buddy.m.root.scale.setScalar(BUDDY.buddyScale || 0.8);
+    buddy.tag = A.nameTag(BUDDY.name, BUDDY.tag || '#ffb02e');
     buddy.tag.position.y = 2.75;
     buddy.m.root.add(buddy.tag);
     buddy.m.root.visible = false;
-    treat.sprite = new T.Sprite(new T.SpriteMaterial({ depthWrite: false }));
-    treat.sprite.visible = false;
-    scene.add(buddy.m.root, treat.sprite);
+    scene.add(buddy.m.root);
+    const nice = BUDDY.name[0] + BUDDY.name.slice(1).toLowerCase();
+    const card = $('buddyCard');
+    card.querySelector('img').src = thumbs[BUDDY.id];
+    card.querySelector('.nm').textContent = BUDDY.name;
+    $('buddyFace').src = $('pwBuddyFace').src = thumbs[BUDDY.id];
+    $('buddyName').textContent = BUDDY.name;
+    $('buddyKeyName').textContent = nice;
+    $('buddyBtn').title = `Call ${nice} (T)`;
+    $('pwBuddy').title = `${nice} is guarding you`;
   }
 
   const GUARD_UNTIL = 9.6; // seconds into his visit when he starts dropping back
-  const tommyGuarding = () => buddy.on && buddy.t < GUARD_UNTIL;
+  const buddyGuarding = () => buddy.on && buddy.t < GUARD_UNTIL;
 
   function summonBuddy() {
     if (buddy.on) return;
@@ -1050,7 +1075,7 @@
   const handPos = new T.Vector3();
   function updateTreat(dt) {
     if (treat.flyT >= 0) {
-      // arc from Tommy's hand into the runner's hand
+      // arc from the buddy's hand into the runner's hand
       treat.flyT += dt / 0.55;
       playerM.armR.localToWorld(handPos.set(0, -0.72, 0));
       const k = Math.min(1, treat.flyT);
@@ -1145,7 +1170,7 @@
       if (t > 0) el.fill.style.transform = `scaleX(${clamp(t / DUR[key], 0, 1)})`;
     }
     ui.autoBadge.classList.toggle('on', G.auto && G.state === 'playing');
-    const guarding = tommyGuarding();
+    const guarding = buddyGuarding();
     ui.buddyRow.classList.toggle('on', guarding);
     ui.buddyBtn.classList.toggle('guarding', guarding);
     if (guarding) ui.buddyFill.style.transform = `scaleX(${clamp(1 - buddy.t / GUARD_UNTIL, 0, 1)})`;

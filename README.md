@@ -17,18 +17,18 @@ There are no image, model, or audio files: every texture is painted on a canvas,
 | ↓ S | swipe down | roll; in mid-air it slams you down |
 | B | double-tap or 🛹 button | hoverboard: survives one crash |
 | C | 🤖 button | Claude autopilot on/off; any arrow takes the wheel back |
-| T | Tommy button (bottom right) | call Tommy, any time and as often as you like |
+| T | buddy button (bottom right) | call your buddy, any time and as often as you like |
 | P / Esc | ❚❚ button | pause |
 | M | 🔊 button | sound on/off |
 
 ## Runners, Tommy, the zombie and the Word Hunt
 
-- **Pick your runner** on the title screen. TEDDY is modelled on the photo: black spiky hair, a big grin, a blue brick-wall tee and red sneakers. The others are ZOOM, LUNA, BOLT the robot and BRUNO the bear. Each runner keeps its own best score, so everyone in the family can have one.
+- **Pick your runner** on the title screen. TEDDY and TOMMY are modelled on their photos. Teddy has black spiky hair, a big grin, a blue brick-wall tee and red sneakers. Tommy has short black hair, a mint space tee with a UFO beaming up a dinosaur, cream joggers, and his favourite Y pose (both arms up, peace fingers). The others are ZOOM, LUNA, BOLT the robot and BRUNO the bear. Each runner keeps its own best score, so everyone in the family can have one.
 - **ZOMBIE** (Tommy's idea): a cartoon zombie shambles right up to the screen with a groan and a "BOO!". You get this two ways: by picking the ZOMBIE runner (then you run as him, arms out), or by running into a 🧟 zombie card on the track. When you hit the card, the run freezes until the scare is over and then carries on with a moment of protection, so it can never cost you a run.
-- **TOMMY** is a buddy, not a runner, and he's modelled on his photo: short black hair, a mint space tee with a UFO beaming up a dinosaur, cream joggers, and his favourite Y pose (both arms up, peace fingers). Tap his card on the title screen, his button during a run, or press T, and he runs in doing the Y pose. He follows your runner for about 10 s, copying their jumps and rolls, and hands over a treat (🍦 💧 🧃 🍪 🍉 🍌) that your runner carries. Then he poses again and drops back. Tap again while he's there and he poses and hands over another treat; tap after he's gone and he comes right back.
-  **Tommy has your back:** while he's running with you (until he starts dropping back, about 9.6 s; his orange bar shows the time left), crashing into a train or barrier doesn't end the run. The obstacle bursts, "TOMMY SAVED YOU!" pops up and he does a Y pose. Side bumps don't bring the inspector, and your hoverboard isn't used up. Calling him again keeps the protection going.
-- **Word Hunt:** letter tiles for the current word appear on the track, one at a time and in order. Spell the word for 100 coins plus its reward. TEDDY gives a hoverboard, TOMMY makes Tommy come running, METRO gives 2× score, SURF super sneakers, ZOMBIE a magnet and CLAUDE a jetpack. Progress carries over between runs.
-- **Make it yours:** `js/avatars.js` holds the runners, Tommy's look and the word list. Copy an entry to add a player (say, Dad) or a word; every field is a colour or a style name.
+- **Your buddy is the other brother:** Tommy runs along with every runner, except when Tommy is the runner, when Teddy comes instead. Tap the buddy card on the title screen, the buddy button during a run, or press T, and he runs in doing his signature pose (Tommy's Y, Teddy's wave). He follows your runner for about 10 s, copying their jumps and rolls, and hands over a treat (🍦 💧 🧃 🍪 🍉 🍌) that your runner carries. Then he poses again and drops back. Tap again while he's there and he poses and hands over another treat; tap after he's gone and he comes right back.
+  **Your buddy has your back:** while he's running with you (until he starts dropping back, about 9.6 s; his bar shows the time left), crashing into a train or barrier doesn't end the run. The obstacle bursts, "TOMMY SAVED YOU!" (or "TEDDY SAVED YOU!") pops up and he does his pose. Side bumps don't bring the inspector, and your hoverboard isn't used up. Calling him again keeps the protection going.
+- **Word Hunt:** letter tiles for the current word appear on the track, one at a time and in order. Spell the word for 100 coins plus its reward. TEDDY gives a hoverboard, TOMMY makes your buddy come running, METRO gives 2× score, SURF super sneakers, ZOMBIE a magnet and CLAUDE a jetpack. Progress carries over between runs.
+- **Make it yours:** `js/avatars.js` holds the runners (Teddy and Tommy included), who comes along as whose buddy, and the word list. Copy an entry to add a player (say, Dad) or a word; every field is a colour or a style name.
 
 ## What's in it
 

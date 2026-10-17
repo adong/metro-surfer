@@ -4,9 +4,22 @@ window.MetroAvatars = [
   {
     id: 'teddy',
     name: 'TEDDY',
+    buddyScale: 0.85, // size when he's the buddy running alongside
+    tag: '#8cc2ff', // name-tag colour when he's the buddy
     look: {
       head: 'human', skin: '#efc29c', hair: 'spiky', hairColor: '#16130f', brows: true, smile: true,
       shirt: 'tee', top: '#4a86cf', print: 'bricks', bottom: '#2b3140', shoes: '#e53935',
+    },
+  },
+  {
+    id: 'tommy',
+    name: 'TOMMY',
+    pose: 'peace', // his favourite: both arms up in a Y, peace fingers (比耶)
+    buddyScale: 0.72,
+    tag: '#ffb02e',
+    look: {
+      head: 'human', skin: '#efc6a2', hair: 'short', hairColor: '#15120e', brows: true, peace: true,
+      shirt: 'tee', top: '#c3d6cf', print: 'ufo', bottom: '#e6dfd0', shoes: '#2f4a7a',
     },
   },
   {
@@ -60,21 +73,13 @@ window.MetroInspector = {
   badge: true, mustache: true, belly: true, shirt: 'jacket', top: '#27428c', bottom: '#1c2f66', shoes: '#151418',
 };
 
-// Tommy isn't a runner: tap his card and he runs along with you for a bit, hands you a treat and does his Y pose.
-window.MetroBuddy = {
-  id: 'tommy',
-  name: 'TOMMY',
-  scale: 0.72,
-  pose: 'peace', // his favourite: both arms up in a Y, peace fingers (比耶)
-  look: {
-    head: 'human', skin: '#efc6a2', hair: 'short', hairColor: '#15120e', brows: true, peace: true,
-    shirt: 'tee', top: '#c3d6cf', print: 'ufo', bottom: '#e6dfd0', shoes: '#2f4a7a',
-  },
-};
+// The buddy you call with the buddy button (or T): the other brother. Tommy runs with everyone, except when
+// Tommy is the runner, then Teddy comes along.
+window.MetroBuddyFor = (runnerId) => (runnerId === 'tommy' ? 'teddy' : 'tommy');
 
 // Word Hunt: the letters of the current word show up on the track one at a time, in order. Spell the word to win
 // 100 coins plus its reward, then the next word starts. Progress is saved between runs. Add your own words here.
-// Rewards: board (+1 hoverboard), tommy (Tommy runs with you), mult, sneakers, magnet, jet, coins (100 more coins).
+// Rewards: board (+1 hoverboard), tommy (your buddy runs with you), mult, sneakers, magnet, jet, coins (100 more coins).
 window.MetroWords = [
   { word: 'TEDDY', reward: 'board' },
   { word: 'TOMMY', reward: 'tommy' },
