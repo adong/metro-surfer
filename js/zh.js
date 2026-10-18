@@ -3,7 +3,7 @@
    Word Hunt is a spelling game, and the walls are a real-looking subway. */
 (function () {
   const L = Kit.lang;
-  L.keep(['METRO', 'SURFER', 'Metro Surfer', 'TEDDY', 'TOMMY', 'Teddy', 'Tommy', 'ZOOM', 'LUNA', 'BOLT', 'BRUNO', 'Claude Code']);
+  L.keep(['METRO', 'SURFER', 'Metro Surfer', 'TEDDY', 'TOMMY', 'Teddy', 'Tommy', 'ZOOM', 'LUNA', 'BOLT', 'BRUNO', 'Claude Code', 'Esc']);
 
   L.add({
     // title screen
