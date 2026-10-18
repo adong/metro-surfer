@@ -2,6 +2,8 @@
 
 [![Metro Surfer title screen](docs/screenshot.jpg)](https://adong.github.io/metro-surfer/)
 
+Press **?** any time (or tap the round **?** button on the left edge) to see the keys. The game waits while you look.
+
 A 3D endless runner in the spirit of Subway Surfers. It's built with Claude Code from plain JavaScript and Three.js.
 There are no image, model, or audio files: every texture is painted on a canvas, every model is built from boxes, and every sound is synthesised.
 
