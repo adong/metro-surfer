@@ -19,6 +19,7 @@ There are no image, model, or audio files: every texture is painted on a canvas,
 | C | 🤖 button | Claude autopilot on/off; any arrow takes the wheel back |
 | T | buddy button (bottom right) | call your buddy, any time and as often as you like |
 | P / Esc | ❚❚ button | pause |
+| H | 🏠 MENU (on the pause and game-over screens) | back to the title screen to pick another runner |
 | M | 🔊 button | sound on/off |
 
 ## Runners, Tommy, the zombie and the Word Hunt

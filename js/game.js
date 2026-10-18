@@ -714,6 +714,19 @@
     S.music('over');
   }
 
+  // Back to the title screen from pause or game over: the run is dropped and the attract mode starts again.
+  function toMenu() {
+    if (G.state !== 'paused' && G.state !== 'over') return;
+    show('pause', false);
+    show('over', false);
+    show('hud', false);
+    $('scare').classList.remove('on');
+    startAttract();
+    show('title', true);
+    S.music('title');
+    S.click();
+  }
+
   function togglePause() {
     if (G.state === 'playing') {
       G.state = 'paused';
@@ -1356,6 +1369,7 @@
       if (e.code === 'KeyC') return toggleAuto();
       if (e.code === 'KeyT') return callBuddy();
       if (e.code === 'KeyP' || e.code === 'Escape') return togglePause();
+      if (e.code === 'KeyH') return toMenu();
       if (G.state === 'title' || G.state === 'over') {
         if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
           e.preventDefault();
@@ -1418,6 +1432,8 @@
     tapBtn('playBtn', startGame);
     tapBtn('againBtn', startGame);
     tapBtn('resumeBtn', togglePause);
+    tapBtn('pauseMenuBtn', toMenu);
+    tapBtn('overMenuBtn', toMenu);
     tapBtn('pauseBtn', togglePause);
     tapBtn('muteBtn', toggleMute);
     tapBtn('autoBtn', toggleAuto);

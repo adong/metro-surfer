@@ -141,6 +141,9 @@
     box-shadow: 0 8px 0 var(--ink), 0 14px 30px rgba(0, 0, 0, 0.3); transition: transform 0.08s, box-shadow 0.08s;
   }
   .btn:hover { background: #ffe03d; }
+  .btn.ghost { background: #ffffff; }
+  .btn.ghost:hover { background: #e8f4ff; }
+  .btnrow { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
   .btn:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--ink); }
   .pulse { animation: pulse 1.3s ease-in-out infinite; }
   @keyframes pulse { 50% { transform: scale(1.07); } }
@@ -309,8 +312,11 @@
 
 <div id="pause" class="screen hidden">
   <div class="busted paused">PAUSED</div>
-  <button id="resumeBtn" class="btn">▶ RESUME</button>
-  <p class="hint">P · Esc · Space</p>
+  <div class="btnrow">
+    <button id="resumeBtn" class="btn">▶ RESUME</button>
+    <button id="pauseMenuBtn" class="btn ghost">🏠 MENU</button>
+  </div>
+  <p class="hint">P · Esc · Space to resume · H for the menu</p>
 </div>
 
 <div id="over" class="screen hidden">
@@ -322,8 +328,11 @@
   </div>
   <div id="newBest" class="flag">★ NEW BEST! ★</div>
   <div id="autoNote" class="note">🤖 Autopilot helped this run, so it doesn't count toward BEST</div>
-  <button id="againBtn" class="btn">↻ RUN AGAIN</button>
-  <p class="hint">Space · Enter · Tap</p>
+  <div class="btnrow">
+    <button id="againBtn" class="btn">↻ RUN AGAIN</button>
+    <button id="overMenuBtn" class="btn ghost">🏠 MENU</button>
+  </div>
+  <p class="hint">Space · Enter · Tap to run again · H for the menu</p>
   <div class="credit">built with <b>Claude Code</b></div>
 </div>
 
@@ -2871,6 +2880,19 @@ window.MetroWords = [
     S.music('over');
   }
 
+  // Back to the title screen from pause or game over: the run is dropped and the attract mode starts again.
+  function toMenu() {
+    if (G.state !== 'paused' && G.state !== 'over') return;
+    show('pause', false);
+    show('over', false);
+    show('hud', false);
+    $('scare').classList.remove('on');
+    startAttract();
+    show('title', true);
+    S.music('title');
+    S.click();
+  }
+
   function togglePause() {
     if (G.state === 'playing') {
       G.state = 'paused';
@@ -3513,6 +3535,7 @@ window.MetroWords = [
       if (e.code === 'KeyC') return toggleAuto();
       if (e.code === 'KeyT') return callBuddy();
       if (e.code === 'KeyP' || e.code === 'Escape') return togglePause();
+      if (e.code === 'KeyH') return toMenu();
       if (G.state === 'title' || G.state === 'over') {
         if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
           e.preventDefault();
@@ -3575,6 +3598,8 @@ window.MetroWords = [
     tapBtn('playBtn', startGame);
     tapBtn('againBtn', startGame);
     tapBtn('resumeBtn', togglePause);
+    tapBtn('pauseMenuBtn', toMenu);
+    tapBtn('overMenuBtn', toMenu);
     tapBtn('pauseBtn', togglePause);
     tapBtn('muteBtn', toggleMute);
     tapBtn('autoBtn', toggleAuto);
