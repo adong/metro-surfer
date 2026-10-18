@@ -136,7 +136,7 @@ Every game plays in English or 中文.
 - **Remembered:**
   - the choice is saved under `localStorage['claudeGames.lang']`;
   - the dashboard uses the same key, so on the same site one choice carries into every game;
-  - on a first visit the language follows the browser.
+  - a first visit is always in English (Alan's choice), until someone picks 中文.
 - **Page text translates itself** from the game's dictionary:
   - every text node, placeholder, title and aria-label is checked, now and whenever the game changes the page later (a MutationObserver);
   - so `el.textContent = 'TOMMY SAVED YOU!'` needs no code change, only a dictionary entry.

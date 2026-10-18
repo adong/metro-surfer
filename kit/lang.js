@@ -1,7 +1,7 @@
 /* Kit.lang: every game in English or 中文.
 
    - The choice is remembered under one localStorage key ('claudeGames.lang'), shared by every game and the dashboard on
-     the same site, so switching on the dashboard switches the games too. The first visit follows the browser's language.
+     the same site, so switching on the dashboard switches the games too. A first visit is in English.
    - A small 中文 / EN button sits under the ? button (and the ? panel has one too). Switching is live: no reload.
    - Page text translates by itself. A dictionary (English -> 中文) is checked against every text node and every
      placeholder, title and aria-label, now and whenever the game changes the page later (a MutationObserver), so a
@@ -27,7 +27,7 @@
 
   let lang = '';
   try { lang = localStorage.getItem(KEY) || ''; } catch (e) { /* storage blocked */ }
-  if (lang !== 'en' && lang !== 'zh') lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  if (lang !== 'en' && lang !== 'zh') lang = 'en'; // English until someone picks 中文 (Alan's choice)
 
   const dict = new Map();
   const rules = [];
